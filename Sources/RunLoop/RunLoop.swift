@@ -8,7 +8,7 @@ public class RunLoop {
 
     public init() {
         eventBase = event_base_new()
-        events    = [Event]()
+        events = []
     }
 
     deinit {
@@ -30,10 +30,10 @@ public class RunLoop {
         event.remove()
     }
 
-    public func run() {
-        guard event_base_dispatch(eventBase) == 1 else {
-            fatalError("Runloop failed")
-        }
+    @discardableResult
+    public func run() -> Bool {
+        guard event_base_dispatch(eventBase) == 1 else { return false }
         run()
+        return true
     }
 }

@@ -24,64 +24,64 @@ public class Event {
     public let fd: Int32
     var internalEvent: OpaquePointer!
     public var handler: EventHandler?
-
+    
     public init(types: [EventType], fd: Int32, handler: EventHandler? = nil) {
         self.types = types
-        self.fd    = fd
+        self.fd = fd
         self.handler = handler
-        internalEvent = event_new(
-            RunLoop.shared.eventBase,
-            fd,
-            toRaw(),
-            { (fileDescriptor, eventTypeRaw, instancePtr) in
-                guard let eventType = EventType(rawValue: eventTypeRaw) else { return }
-                let event = unsafeBitCast(instancePtr, to: Event.self)
-                event.handle(type: eventType)
-            },
-            Unmanaged.passUnretained(self).toOpaque()
-        )
+        internalEvent = event_new(RunLoop.shared.eventBase, fd, raw, callback, pointer)
     }
-
+    
+    var callback: @convention(c) (Int32, Int16, UnsafeMutableRawPointer?) -> Void = { fileDescriptor, eventTypeRaw, instancePtr in
+        guard let eventType = EventType(rawValue: eventTypeRaw) else { return }
+        let event = unsafeBitCast(instancePtr, to: Event.self)
+        event.handle(type: eventType)
+    }
+    
     deinit {
         if let internalEvent = internalEvent {
             event_del(internalEvent)
             event_free(internalEvent)
         }
     }
-
+    
     internal func handle(type: EventType) {
         switch(type) {
         case .read:
             handler?.readEvent()
             break
-
+            
         case .write:
             handler?.writeEvent()
             break
-
+            
         default:
             print("[Event] Unhandled type: \(type)")
             break
         }
     }
-
+    
     public func remove() {
         if let internalEvent = internalEvent {
             event_del(internalEvent)
         }
     }
-
+    
     public func add() {
         if let internalEvent = internalEvent {
             event_add(internalEvent, nil)
         }
     }
-
+    
     internal func getEvent() -> OpaquePointer {
         return internalEvent!
     }
-
-    @inline(__always) final func toRaw() -> Int16 {
-        return types.reduce(0) { return $0 + $1.rawValue }
+    
+    @inline(__always) var raw: Int16 {
+        types.reduce(0) { $0 + $1.rawValue }
+    }
+    
+    var pointer: UnsafeMutableRawPointer {
+        Unmanaged.passUnretained(self).toOpaque()
     }
 }

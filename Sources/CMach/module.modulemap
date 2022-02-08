@@ -1,5 +1,0 @@
-module CMach [system] {
-    header "mach.h"
-    link "mach"
-    export *
-}

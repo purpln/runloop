@@ -1,0 +1,5 @@
+module CThread [system] {
+    header "thread.h"
+    link "thread"
+    export *
+}

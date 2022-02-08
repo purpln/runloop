@@ -33,7 +33,6 @@ public class RunLoop {
     @discardableResult
     public func run() -> Bool {
         guard event_base_dispatch(eventBase) == 1 else { return false }
-        run()
         return true
     }
 }
